@@ -1,20 +1,22 @@
 import os
 import sqlite3
+import subprocess
 
 MAX_NAME_LENGTH = 40
+base_folder = "Library"  # change if necessary
 
-database = sqlite3.connect('example.db')
+database = sqlite3.connect('main.db')
 
-database.execute("UPDATE Videos SET file_exists = 0")
+for video in database.execute("SELECT * FROM Videos WHERE file_exists = 0 AND videoUrl IS NOT NULL"):
+    dirs = []
+    for i in range(4):
+        dirs.append((video[i][0:MAX_NAME_LENGTH]).strip())
 
-for video in database.execute("SELECT * FROM Videos WHERE videoUrl IS NOT NULL"):
-	dirs = []
-	for i in range(4):
-		dirs.append(video[i].strip()[0:MAX_NAME_LENGTH])
+    directory = "{}/{}/{}".format(base_folder, dirs[0], dirs[2])
+    path = "{}/{}.mp4".format(directory, dirs[3])
+    check_subs = 'ffmpeg -i "%s" -c copy -map 0:s -f null - -v 0 -hide_banner && echo true || echo false'
 
-	directory = "library/{}/{}".format(dirs[0],dirs[2])
-	path = "{}/{}.mp4".format(directory,dirs[3])
-	if os.path.isfile(path):
-		database.execute("UPDATE Videos SET file_exists = 1 WHERE pageUrl = ?", (video[4],))
+    if os.path.isfile(path) and subprocess.check_output(check_subs % path, shell=True, text=True) == "true":
+        database.execute("UPDATE Videos SET file_exists = 1 WHERE pageUrl = ?", "1")
 
 database.commit()
