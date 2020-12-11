@@ -15,7 +15,7 @@ database = sqlite3.connect('main.db')
 # data_cursor = database.cursor()
 
 options = webdriver.ChromeOptions()
-options.add_argument("user-data-dir=selenium/chrome_driver")
+options.add_argument("user-data-dir=selenium/chrome_driver")  # for Windows add .exe
 options.add_argument("disable-web-security")
 driver = webdriver.Chrome(executable_path="selenium/chromedriver", options=options)
 
