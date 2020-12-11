@@ -1,48 +1,59 @@
-import sqlite3
 import os
+import sqlite3
+import subprocess
 from pathlib import Path
-import requests
+from time import sleep
+
 import ffmpeg
 
-ONLINE = False
 MAX_NAME_LENGTH = 40
-database = sqlite3.connect('example.db')
+base_folder = "Library"  # change path if necessary
 
-def save(online=True):
-	base_folder = None
-	extension = None
-	if online:
-		base_folder="online_library"
-		extension="m3u8"
-	else:
-		base_folder="library"
-		extension="mp4"
+database = sqlite3.connect('main.db')
 
-	#Get all videos with valid urls
-	for video in database.execute("SELECT * FROM Videos WHERE videoUrl IS NOT NULL"):
-		dirs = []
-		for i in range(4):
-			dirs.append(video[i].strip()[0:MAX_NAME_LENGTH])
 
-		directory = "{}/{}/{}".format(base_folder,dirs[0],dirs[2]).strip()
-		path = "{}/{}.{}".format(directory,dirs[3],extension)
-		srt_path = "{}/{}.srt".format(directory,dirs[3])
+def save():
+    success = True
 
-		#skip if exists
-		if os.path.isfile(path):
-			continue
-		print(video[1],video[2],video[3])
-		#download
-		Path(directory).mkdir(parents=True, exist_ok=True)
+    for video in database.execute("SELECT * FROM Videos WHERE videoUrl IS NOT NULL"):
+        dirs = []
+        for i in range(4):
+            dirs.append((video[i][0:MAX_NAME_LENGTH]).strip())
 
-		if online:
-			r = requests.get(video[5])
-			open(path, "wb").write(r.content)
-		else:
-			ffmpeg.input(video[5]).output(path,codec="copy").run()
+        directory = "{}/{}/{}".format(base_folder, dirs[0], dirs[2])
+        path = "{}/{}.mp4".format(directory, dirs[3])
 
-		if (video[6] is not None):
-			r = requests.get(video[6])
-			open(srt_path, "wb").write(r.content)
+        if os.path.isfile(path):
+            check_subs = 'ffmpeg -i "%s" -c copy -map 0:s -f null - -v 0 -hide_banner && echo true || echo false'
+            if subprocess.check_output(check_subs % path, shell=True, text=True) == "false" and video[6] is not None:
+                os.remove(path)
+            else:
+                continue
 
-save(online=ONLINE)
+        print(video[1], video[2], video[3])
+        Path(directory).mkdir(parents=True, exist_ok=True)
+
+        try:  # Tries to convert m3u8 from url to mp4
+            if video[6] is None:
+                ffmpeg.input(video[5]).output(path, codec="copy").run()
+            else:
+                (
+                    ffmpeg
+                    .input(video[5])
+                    .output(path, vcodec="copy", acodec="copy", scodec="mov_text",
+                            **{'metadata:s:s:0': "language=eng", 'disposition:s:s:0': "default"})
+                    .global_args('-i', video[6])
+                    .run()
+                )
+        except:  # Connection lost // Video URLs expire every few hours so if you get a http status code 404 in
+            # stderr then you need to run get_video_urls.py again as a refresh
+            sleep(10)
+            success = False
+            os.remove(path)
+            break
+
+    if not success:
+        save()
+
+
+save()
