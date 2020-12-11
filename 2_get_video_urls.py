@@ -54,7 +54,6 @@ for video in database.execute("SELECT * FROM Videos WHERE file_exists = 0"):
             srt_url = None
 
         database.execute("UPDATE Videos SET videoUrl=?, srtUrl=? WHERE pageUrl=?", (video_src, srt_url, video[4]))
-        database.commit()
         break
 
 driver.close()
