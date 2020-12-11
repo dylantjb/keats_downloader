@@ -13,10 +13,10 @@ database = sqlite3.connect('main.db')
 
 
 def save():
-    success = True
-
     for video in database.execute("SELECT * FROM Videos WHERE videoUrl IS NOT NULL"):
+        success = True
         dirs = []
+        
         for i in range(4):
             dirs.append((video[i][0:MAX_NAME_LENGTH]).strip())
 
