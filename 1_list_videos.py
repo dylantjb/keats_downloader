@@ -12,7 +12,6 @@ with open("courses.txt", "r") as f:
 print(courses)
 
 database = sqlite3.connect('main.db')
-# data_cursor = database.cursor()
 
 options = webdriver.ChromeOptions()
 options.add_argument("user-data-dir=selenium/chrome_driver")  # for Windows add .exe
