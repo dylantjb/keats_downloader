@@ -48,12 +48,12 @@ for video in database.execute("SELECT * FROM Videos WHERE file_exists = 0"):
             continue
 
         try:  # Tries to find the child class where subs are
-            srt = video_tag.find_element_by_xpath("./child::*").get_attribute('src')
+            srt_url = video_tag.find_element_by_xpath("./child::*").get_attribute('src')
             print("srt found")
         except:
-            srt = None
+            srt_url = None
 
-        database.execute("UPDATE Videos SET videoUrl=?, srtUrl=? WHERE pageUrl=?", (video_src, srt, video[4]))
+        database.execute("UPDATE Videos SET videoUrl=?, srtUrl=? WHERE pageUrl=?", (video_src, srt_url, video[4]))
         database.commit()
         break
 
