@@ -45,12 +45,12 @@ def save(video_url, srt_url, page_url):
         if srt_path is None:
             ffmpeg.input(video_url).output(path, codec="copy").run()
         else:
-            (
+            (  # NOTICE: CPU usage will increase through thread queue size, so adjust to liking
                 ffmpeg
                 .input(video_url, thread_queue_size=2048)
                 .output(path, vcodec="copy", acodec="copy", scodec="mov_text",
                         **{'metadata:s:s:0': "language=eng", 'disposition:s:s:0': "default"})
-                .global_args('-thread_queue_size', '512', '-i', srt_url)
+                .global_args('-thread_queue_size', '512', '-i', srt_url) 
                 .run()
             )
             database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
