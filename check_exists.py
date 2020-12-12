@@ -3,7 +3,7 @@ import sqlite3
 import subprocess
 
 MAX_NAME_LENGTH = 40
-base_folder = "/home/dylan/OneDrive/Lectures"  # change if necessary
+base_folder = "Library"  # change if necessary
 
 database = sqlite3.connect('main.db')
 
