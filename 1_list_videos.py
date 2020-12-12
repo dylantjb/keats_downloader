@@ -14,7 +14,8 @@ print(courses)
 database = sqlite3.connect('main.db')
 
 options = webdriver.ChromeOptions()
-options.add_argument("user-data-dir=selenium/chrome_driver")  # for Windows add .exe
+options.headless = True
+options.add_argument("--user-data-dir=" + os.getcwd() + "/selenium/chrome_driver")  # for Windows add .exe
 options.add_argument("disable-web-security")
 driver = webdriver.Chrome(executable_path="selenium/chromedriver", options=options)
 
