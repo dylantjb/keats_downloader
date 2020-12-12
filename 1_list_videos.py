@@ -15,9 +15,9 @@ database = sqlite3.connect('main.db')
 
 options = webdriver.ChromeOptions()
 options.headless = True
-options.add_argument("--user-data-dir=" + os.getcwd() + "/selenium/chrome_driver")  # for Windows add .exe
-options.add_argument("disable-web-security")
-driver = webdriver.Chrome(executable_path="selenium/chromedriver", options=options)
+options.add_argument("--user-data-dir=" + os.getcwd() + "/selenium/chrome_driver")
+options.add_argument("--disable-web-security")
+driver = webdriver.Chrome(executable_path="selenium/chromedriver", options=options)  # for Windows add .exe
 
 driver.get("https://keats.kcl.ac.uk/")
 wait_element = ec.presence_of_element_located((By.ID, 'page-footer'))
