@@ -47,10 +47,10 @@ def save(video_url, srt_url, page_url):
         else:
             (
                 ffmpeg
-                .input(video_url)
+                .input(video_url, thread_queue_size=2048)
                 .output(path, vcodec="copy", acodec="copy", scodec="mov_text",
                         **{'metadata:s:s:0': "language=eng", 'disposition:s:s:0': "default"})
-                .global_args('-i', srt_url)
+                .global_args('-thread_queue_size', '512', '-i', srt_url)
                 .run()
             )
             database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
