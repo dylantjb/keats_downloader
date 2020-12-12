@@ -13,13 +13,13 @@ from selenium import webdriver
 
 database = sqlite3.connect('main.db')
 MAX_NAME_LENGTH = 40
-base_folder = "Library"  # change path if necessary
+base_folder = ":ibrary"  # change if necessary
 
 options = webdriver.ChromeOptions()
 options.headless = True
 options.add_argument("--user-data-dir=" + os.getcwd() + "/selenium/chrome_driver")
 options.add_argument("--disable-web-security")
-driver = webdriver.Chrome(executable_path="selenium/chromedriver", options=options)
+driver = webdriver.Chrome(executable_path="selenium/chromedriver", options=options)  # add .exe for Windows
 
 driver.get("https://keats.kcl.ac.uk/")
 wait_element = ec.presence_of_element_located((By.ID, 'page-footer'))
@@ -27,8 +27,6 @@ WebDriverWait(driver, 10).until(wait_element)
 
 
 def save(video_url, srt_url, page_url):
-    success = True
-
     for result in database.execute("SELECT * FROM Videos WHERE pageUrl=?", [page_url]):
         dirs = []
         for i in range(4):
@@ -44,26 +42,19 @@ def save(video_url, srt_url, page_url):
 
         Path(directory).mkdir(parents=True, exist_ok=True)
 
-        try:  # Tries to convert m3u8 from url to mp4
-            if srt_path is None:
-                ffmpeg.input(result[5]).output(path, codec="copy").run()
-            else:
-                (
-                    ffmpeg
-                    .input(video_url)
-                    .output(path, vcodec="copy", acodec="copy", scodec="mov_text",
-                            **{'metadata:s:s:0': "language=eng", 'disposition:s:s:0': "default"})
-                    .global_args('-i', srt_url)
-                    .run()
-                )
-                database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
-                database.commit()
-        except:  # Connection lost
-            sleep(10)
-            success = False
-
-    if not success:
-        save(video_url, srt_path, page_url)
+        if srt_path is None:
+            ffmpeg.input(result[5]).output(path, codec="copy").run()
+        else:
+            (
+                ffmpeg
+                .input(video_url)
+                .output(path, vcodec="copy", acodec="copy", scodec="mov_text",
+                        **{'metadata:s:s:0': "language=eng", 'disposition:s:s:0': "default"})
+                .global_args('-i', srt_url)
+                .run()
+            )
+            database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
+            database.commit()
 
 
 for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
