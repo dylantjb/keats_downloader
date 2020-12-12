@@ -54,7 +54,6 @@ def save(video_url, srt_url, page_url):
                 .run()
             )
             database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
-            database.commit()
 
 
 for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
@@ -90,3 +89,6 @@ for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
 
         save(video_src, srt_path, video[4])
         break
+ 
+database.commit()
+
