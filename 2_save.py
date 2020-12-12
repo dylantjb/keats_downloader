@@ -43,7 +43,7 @@ def save(video_url, srt_url, page_url):
         Path(directory).mkdir(parents=True, exist_ok=True)
 
         if srt_path is None:
-            ffmpeg.input(result[5]).output(video_url, codec="copy").run()
+            ffmpeg.input(video_url).output(path, codec="copy").run()
         else:
             (
                 ffmpeg
