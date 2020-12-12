@@ -13,7 +13,7 @@ from selenium import webdriver
 
 database = sqlite3.connect('main.db')
 MAX_NAME_LENGTH = 40
-base_folder = ":ibrary"  # change if necessary
+base_folder = "Library"  # change if necessary
 
 options = webdriver.ChromeOptions()
 options.headless = True
