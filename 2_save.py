@@ -36,9 +36,7 @@ def save(video_url, srt_url, page_url):
         path = "{}/{}.mp4".format(directory, dirs[3])
 
         if os.path.isfile(path):
-            check_subs = 'ffmpeg -i "%s" -c copy -map 0:s -f null - -v 0 -hide_banner && echo true || echo false'
-            if subprocess.check_output(check_subs % path, shell=True, text=True) == "false" and srt_path is not None:
-                os.remove(path)
+            os.remove(path)
 
         Path(directory).mkdir(parents=True, exist_ok=True)
 
