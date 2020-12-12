@@ -35,15 +35,16 @@ def save(video_url, srt_url, page_url):
         directory = "{}/{}/{}".format(base_folder, dirs[0], dirs[2])
         path = "{}/{}.mp4".format(directory, dirs[3])
 
-        if os.path.isfile(path) and srt_url is None:
-            return
-        else:
-            os.remove(path)
+        if os.path.isfile(path):
+            if srt_url:
+                os.remove(path)
+            else:
+                return
         
         Path(directory).mkdir(parents=True, exist_ok=True)
 
         try:
-            if srt_path is None:
+            if not srt_path:
                 ffmpeg.input(video_url).output(path, codec="copy").run()
             else:
                 (
