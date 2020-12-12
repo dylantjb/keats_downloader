@@ -9,8 +9,6 @@ from selenium import webdriver
 with open("courses.txt", "r") as f:
     courses = [line.strip() for line in f.readlines()]
 
-print(courses)
-
 database = sqlite3.connect('main.db')
 
 options = webdriver.ChromeOptions()
@@ -24,6 +22,7 @@ wait_element = ec.presence_of_element_located((By.ID, 'page-footer'))
 WebDriverWait(driver, 10).until(wait_element)
 for course in courses:
     driver.get(course)
+    print(course)
     WebDriverWait(driver, 10).until(wait_element)
     videoDicts = driver.execute_script(open("list_videos.js").read())
     videos = []
