@@ -63,7 +63,7 @@ class Progress:
 
         if p.returncode != 0:
             print(out[1].decode("utf-8"))
-            raise SystemExit
+            raise
 
     @staticmethod
     def print_progress_bar(iteration, total, prefix='', suffix='', length=100, fill='█', print_end="\r"):
