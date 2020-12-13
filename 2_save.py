@@ -84,7 +84,7 @@ for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
         try:  # Tries to find the child class where subs are
             srt_url = video_tag.find_element_by_xpath("./child::*").get_attribute('src')
             print("srt found")
-        except exceptions.StaleElementReferenceException:
+        except exceptions.NoSuchElementException:
             srt_url = None
 
         if save(video_url, srt_url, video[4]):
