@@ -3,12 +3,14 @@ import sqlite3
 from pathlib import Path
 from time import sleep
 
-import ffmpeg
+from progress_bar import Progress
+
+from selenium import webdriver
+from selenium.common import exceptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
-from selenium import webdriver
 
 database = sqlite3.connect('main.db')
 MAX_NAME_LENGTH = 40
@@ -42,17 +44,8 @@ def save(video_url, srt_url, page_url):
         Path(directory).mkdir(parents=True, exist_ok=True)
 
         try:
-            if not srt_path:
-                ffmpeg.input(video_url).output(path, codec="copy").run()
-            else:
-                (
-                    ffmpeg
-                    .input(video_url, thread_queue_size=2048)
-                    .output(path, vcodec="copy", acodec="copy", scodec="mov_text",
-                            **{'metadata:s:s:0': "language=eng", 'disposition:s:s:0': "default"})
-                    .global_args('-thread_queue_size', '512', '-i', srt_url)
-                    .run()
-                )
+            Progress(video_url, path, srt_url).run()
+            if srt_url:
                 database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
                 database.commit()
         except:  # Connection lost
@@ -75,26 +68,25 @@ for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
             sleep(2)
         except:  # Connection lost
             sleep(10)
-            driver.refresh()
             continue
 
         try:  # Try and find the class where the video is
             video_tag = driver.find_element_by_tag_name('video')
-        except:
+        except exceptions.NoSuchElementException:
             print("Failed to find video frame")
             continue
 
-        video_src = video_tag.get_attribute('src')
-        if not video_src:
+        video_url = video_tag.get_attribute('src')
+        if not video_url:
             print("Failed to find video url")
             break
 
         try:  # Tries to find the child class where subs are
-            srt_path = video_tag.find_element_by_xpath("./child::*").get_attribute('src')
+            srt_url = video_tag.find_element_by_xpath("./child::*").get_attribute('src')
             print("srt found")
-        except:
-            srt_path = None
+        except exceptions.StaleElementReferenceException:
+            srt_url = None
 
-        if save(video_src, srt_path, video[4]):
+        if save(video_url, srt_url, video[4]):
             continue
         break
