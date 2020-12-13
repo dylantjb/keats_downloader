@@ -1,6 +1,5 @@
 import os
 import sqlite3
-import subprocess
 from pathlib import Path
 from time import sleep
 
@@ -20,7 +19,6 @@ options.headless = True
 options.add_argument("--user-data-dir=" + os.getcwd() + "/selenium/chrome_driver")
 options.add_argument("--disable-web-security")
 driver = webdriver.Chrome(executable_path="selenium/chromedriver", options=options)  # add .exe for Windows
-
 driver.get("https://keats.kcl.ac.uk/")
 wait_element = ec.presence_of_element_located((By.ID, 'page-footer'))
 WebDriverWait(driver, 10).until(wait_element)
@@ -40,7 +38,7 @@ def save(video_url, srt_url, page_url):
                 os.remove(path)
             else:
                 return
-        
+
         Path(directory).mkdir(parents=True, exist_ok=True)
 
         try:
@@ -58,7 +56,9 @@ def save(video_url, srt_url, page_url):
                 database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
                 database.commit()
         except:  # Connection lost
-            save(video_url, srt_url, page_url)
+            sleep(10)
+            os.remove(path) if os.path.exists(path) else None
+            return True
 
 
 for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
@@ -85,6 +85,9 @@ for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
             continue
 
         video_src = video_tag.get_attribute('src')
+        if not video_src:
+            print("Failed to find video url")
+            break
 
         try:  # Tries to find the child class where subs are
             srt_path = video_tag.find_element_by_xpath("./child::*").get_attribute('src')
@@ -92,6 +95,6 @@ for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
         except:
             srt_path = None
 
-        save(video_src, srt_path, video[4])
+        if save(video_src, srt_path, video[4]):
+            continue
         break
-
