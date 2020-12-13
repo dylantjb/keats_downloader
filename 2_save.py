@@ -17,8 +17,7 @@ MAX_NAME_LENGTH = 40
 base_folder = "Library"  # change if necessary
 
 options = webdriver.ChromeOptions()
-options.headless = True
-options.add_argument("--user-data-dir=" + os.getcwd() + "/selenium/chrome_driver")
+options.add_argument("--user-data-dir=selenium/chrome_driver")
 options.add_argument("--disable-web-security")
 driver = webdriver.Chrome(executable_path="selenium/chromedriver", options=options)  # add .exe for Windows
 driver.get("https://keats.kcl.ac.uk/")
