@@ -66,7 +66,7 @@ class Progress:
             raise SystemExit
 
     @staticmethod
-    def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█', print_end="\r"):
+    def print_progress_bar(iteration, total, prefix='', suffix='', length=100, fill='█', print_end="\r"):
         """
         Call in a loop to create terminal progress bar
         @params:
@@ -79,15 +79,14 @@ class Progress:
             fill        - Optional  : bar fill character (Str)
             printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
         """
+
+        filled_length = int(length * iteration // total)
+        bar = fill * filled_length + '-' * (length - filled_length)
+        print(f'\r{prefix} |{bar}| {iteration}% {suffix}', end=print_end)
+
         if iteration == total:
             # print new line on Complete
             print()
-        else:
-            percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-            filled_length = int(length * iteration // total)
-            bar = fill * filled_length + '-' * (length - filled_length)
-            print(f'\r{prefix} |{bar}| {percent}% {suffix}', end=print_end)
-           
 
     @contextlib.contextmanager
     def _tmpdir_scope(self):
@@ -134,10 +133,10 @@ class Progress:
         if key == 'out_time_ms':
             if not self.finished:
                 percentage = int(int(value) / 10000. / self.duration)
-                if percentage > 95:
+                if percentage >= 98:
                     self.print_progress_bar(100, 100, prefix='Progress:', suffix='Complete', length=50)
                     self.finished = True
-                elif self.previous_percentage < percentage:
+                elif self.previous_percentage < percentage < 98:
                     sleep(0.1)
                     self.print_progress_bar(percentage, 100, prefix='Progress:', suffix='Complete', length=50)
 
