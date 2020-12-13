@@ -5,3 +5,4 @@ run
 main.db
 courses.txt
 debug.log
+__pycache__/
