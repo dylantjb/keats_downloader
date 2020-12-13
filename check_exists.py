@@ -7,13 +7,14 @@ base_folder = "Library"  # change if necessary
 
 database = sqlite3.connect('main.db')
 
-for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
+for video in database.execute("SELECT * FROM Videos WHERE file_exists IS NOT NULL"):
     dirs = []
     for i in range(4):
         dirs.append((video[i][0:MAX_NAME_LENGTH]).strip())
 
     directory = "{}/{}/{}".format(base_folder, dirs[0], dirs[2])
     path = "{}/{}.mp4".format(directory, dirs[3])
+    print(path)
     check_subs = 'ffmpeg -i "%s" -c copy -map 0:s -f null - -v 0 -hide_banner && echo true || echo false'
 
     if os.path.isfile(path) and subprocess.check_output(check_subs % path, shell=True, text=True).strip() == "true":
