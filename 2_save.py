@@ -39,18 +39,15 @@ def save(video_url, srt_url, page_url):
         path = "{}/{}.mp4".format(directory, dirs[3])
 
         if os.path.isfile(path):
-            if srt_url:
-                os.remove(path)
-            else:
-                return
+            return False
 
         Path(directory).mkdir(parents=True, exist_ok=True)
 
         try:
             Progress(video_url, path, srt_url).run()
-            if srt_url:
-                database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
-                database.commit()
+            sleep(5)
+            database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
+            database.commit()
         except:  # Connection lost
             sleep(10)
             os.remove(path) if os.path.exists(path) else None
