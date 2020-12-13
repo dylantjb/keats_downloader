@@ -133,10 +133,10 @@ class Progress:
         if key == 'out_time_ms':
             if not self.finished:
                 percentage = int(int(value) / 10000. / self.duration)
-                if percentage >= 98:
+                if percentage >= 95:
                     self.print_progress_bar(100, 100, prefix='Progress:', suffix='Complete', length=50)
                     self.finished = True
-                elif self.previous_percentage < percentage < 98:
+                elif self.previous_percentage < percentage < 95:
                     sleep(0.1)
                     self.print_progress_bar(percentage, 100, prefix='Progress:', suffix='Complete', length=50)
 
