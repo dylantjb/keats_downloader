@@ -6,7 +6,7 @@ from time import sleep
 from progress_bar import Progress
 
 from selenium import webdriver
-from selenium.common import exceptions
+from selenium.common.exceptions import WebDriverException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
@@ -20,7 +20,11 @@ options = webdriver.ChromeOptions()
 options.add_argument("--user-data-dir=selenium/chrome_driver")
 options.add_argument("--disable-web-security")
 driver = webdriver.Chrome(executable_path="selenium/chromedriver", options=options)  # add .exe for Windows
+
+driver.minimize_window()
+
 driver.get("https://keats.kcl.ac.uk/")
+
 wait_element = ec.presence_of_element_located((By.ID, 'page-footer'))
 WebDriverWait(driver, 10).until(wait_element)
 
@@ -57,33 +61,51 @@ for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
     print(video[1], video[2], video[3])
 
     while True:
-        try:  # Loads the video player before continuing
+        try:
             driver.get(video[4])
-            WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, 'contentframe')))
-            driver.switch_to.frame(driver.find_element_by_id('contentframe'))
-            driver.execute_script(open("create_player.js").read())
-            WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, 'kplayer_ifp')))
-            driver.switch_to.frame(driver.find_element_by_id('kplayer_ifp'))
-            sleep(2)
-        except:  # Connection lost
+        except WebDriverException:
             sleep(10)
             continue
 
+        # Wait and open contentFrame
+        try:
+            WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, 'contentframe')))
+        except:
+            # The only known case of failure is when a video has been removed
+            print("Failed to find frame")
+            continue
+        driver.switch_to.frame(driver.find_element_by_id('contentframe'))
+
+        # Make sure that the player is loaded
+        driver.execute_script(open("create_player.js").read())
+        # Process player
+        try:
+            WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, 'kplayer_ifp')))
+        except:
+            # Despite the create_player script the player still wasn't found
+            print("Failed to load player")
+            continue
+
+        driver.switch_to.frame(driver.find_element_by_id('kplayer_ifp'))
+
+        # Artificial wait for the contents of kplayer_ifp
+        sleep(1)
+
         try:  # Try and find the class where the video is
             video_tag = driver.find_element_by_tag_name('video')
-        except exceptions.NoSuchElementException:
-            print("Failed to find video frame")
+        except NoSuchElementException:
+            print("Failed to find video class")
             continue
 
         video_url = video_tag.get_attribute('src')
         if not video_url:
-            print("Failed to find video url")
+            print("Failed to find video source")
             break
 
         try:  # Tries to find the child class where subs are
             srt_url = video_tag.find_element_by_xpath("./child::*").get_attribute('src')
             print("srt found")
-        except exceptions.NoSuchElementException:
+        except NoSuchElementException:
             srt_url = None
 
         if save(video_url, srt_url, video[4]):
