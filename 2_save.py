@@ -81,7 +81,7 @@ for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
         try:  # Try and find the class where the video is
             video_tag = driver.find_element_by_tag_name('video')
         except:
-            print("Failed to find video url")
+            print("Failed to find video frame")
             continue
 
         video_src = video_tag.get_attribute('src')
