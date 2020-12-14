@@ -51,7 +51,7 @@ class Progress:
                     )
             except ffmpeg.Error as e:
                 print(e.stderr)
-                raise
+                raise Exception
 
     @contextlib.contextmanager
     def _tmpdir_scope(self):
