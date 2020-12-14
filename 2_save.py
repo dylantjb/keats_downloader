@@ -39,7 +39,7 @@ def save(video_url, srt_url, page_url):
         path = "{}/{}.mp4".format(directory, dirs[3])
 
         if os.path.isfile(path):
-            return False
+            os.remove(path)
 
         Path(directory).mkdir(parents=True, exist_ok=True)
 
