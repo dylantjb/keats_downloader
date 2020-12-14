@@ -2,3 +2,4 @@ selenium
 ffmpeg-python
 requests
 gevent
+tqdm
