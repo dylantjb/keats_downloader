@@ -45,12 +45,15 @@ def save(video_url, srt_url, page_url):
 
         try:
             Progress(video_url, path, srt_url).run()
+        except Exception:  # Connection lost
+            sleep(10)
+            return True
+
+        try:
             database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
             database.commit()
-        except:  # Connection lost
-            sleep(10)
-            os.remove(path) if os.path.exists(path) else None
-            return True
+        except sqlite3.Error:
+            print("Database is locked ... refer to https://github.com/dylantjb/keats_downloader/issues/2")
 
 
 for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
