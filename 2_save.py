@@ -1,130 +1,111 @@
-from __future__ import unicode_literals, print_function
-
-import contextlib
-
-import ffmpeg
-import gevent
-import gevent.monkey
-from tqdm import tqdm
-
-gevent.monkey.patch_all(thread=False)
 import os
-import shutil
-import socket
-import tempfile
+import sqlite3
+from pathlib import Path
+from time import sleep
+
+from show_progress import Progress
+
+from selenium import webdriver
+from selenium.common.exceptions import WebDriverException, NoSuchElementException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 
-class Progress:
-    """
-    Progress bar for ffmpeg using methods from kkroening's answer to 'Ability to track progress of an ffmpeg command':
-    https://github.com/kkroening/ffmpeg-python/issues/43#issuecomment-387666560
-    """
+database = sqlite3.connect('main.db')
+MAX_NAME_LENGTH = 40
+base_folder = "/home/dylan/OneDrive/Lectures"  # change if necessary
 
-    def __init__(self, video_url, path, srt_url):
-        self.video_url = video_url
-        self.path = path
-        self.duration = float(ffmpeg.probe(video_url)['format']['duration'])
-        self.srt_url = srt_url
+options = webdriver.ChromeOptions()
+options.add_argument("--user-data-dir=selenium/chrome_driver")
+options.add_argument("--disable-web-security")
+driver = webdriver.Chrome(executable_path="selenium/chromedriver", options=options)  # add .exe for Windows
 
-    def run(self):
-        with self.show_progress() as socket_filename:
-            try:
-                if not self.srt_url:
-                    (
-                        ffmpeg
-                        .input(self.video_url)
-                        .output(self.path, codec="copy")
-                        .global_args('-progress', 'unix://{}'.format(socket_filename))
-                        .overwrite_output()
-                        .run(capture_stdout=True, capture_stderr=True)
-                    )
-                else:
-                    (
-                        ffmpeg
-                        .input(self.video_url, thread_queue_size=2048)
-                        .output(self.path, vcodec="copy", acodec="copy", scodec="mov_text",
-                                **{'metadata:s:s:0': "language=eng", 'disposition:s:s:0': "default"})
-                        .global_args('-thread_queue_size', '512', '-i', self.srt_url, '-progress',
-                                     'unix://{}'.format(socket_filename))
-                        .overwrite_output()
-                        .run(capture_stdout=True, capture_stderr=True)
-                    )
-            except ffmpeg.Error as e:
-                print(e.stderr)
-                raise
+driver.minimize_window()
 
-    @contextlib.contextmanager
-    def _tmpdir_scope(self):
-        tmpdir = tempfile.mkdtemp()
+driver.get("https://keats.kcl.ac.uk/")
+
+wait_element = ec.presence_of_element_located((By.ID, 'page-footer'))
+WebDriverWait(driver, 10).until(wait_element)
+
+
+def save(video_url, srt_url, page_url):
+    for result in database.execute("SELECT * FROM Videos WHERE pageUrl=?", [page_url]):
+        dirs = []
+        for i in range(4):
+            dirs.append((result[i][0:MAX_NAME_LENGTH]).strip())
+
+        directory = "{}/{}/{}".format(base_folder, dirs[0], dirs[2])
+        path = "{}/{}.mp4".format(directory, dirs[3])
+
+        if os.path.isfile(path):
+            return False
+
+        Path(directory).mkdir(parents=True, exist_ok=True)
+
         try:
-            yield tmpdir
-        finally:
-            shutil.rmtree(tmpdir)
+            Progress(video_url, path, srt_url).run()
+            sleep(5)
+            database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
+            database.commit()
+            print("YOOO")
+        except:  # Connection lost
+            sleep(10)
+            os.remove(path) if os.path.exists(path) else None
+            return True
 
-    @contextlib.contextmanager
-    def _watch_progress(self, handler):
-        """Context manager for creating a unix-domain socket and listen for
-        ffmpeg progress events.
-        The socket filename is yielded from the context manager and the
-        socket is closed when the context manager is exited.
-        Args:
-            handler: a function to be called when progress events are
-                received; receives a ``key`` argument and ``value``
-                argument. (The example ``show_progress`` below uses tqdm)
-        Yields:
-            socket_filename: the name of the socket file.
-        """
-        with self._tmpdir_scope() as tmpdir:
-            socket_filename = os.path.join(tmpdir, 'sock')
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            with contextlib.closing(sock):
-                sock.bind(socket_filename)
-                sock.listen(1)
-                child = gevent.spawn(self._do_watch_progress, sock, handler)
-                try:
-                    yield socket_filename
-                except:
-                    gevent.kill(child)
-                    raise
 
-    @contextlib.contextmanager
-    def show_progress(self):
-        """Create a unix-domain socket to watch progress and render tqdm
-        progress bar."""
-        with tqdm(total=round(self.duration, 2)) as bar:
-            def handler(key, value):
-                if key == 'out_time_ms':
-                    time = round(float(value) / 1000000., 2)
-                    bar.update(time - bar.n)
-                elif key == 'progress' and value == 'end':
-                    bar.update(bar.total - bar.n)
+for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
+    print(video[1], video[2], video[3])
 
-            with self._watch_progress(handler) as socket_filename:
-                yield socket_filename
-
-    @staticmethod
-    def _do_watch_progress(sock, handler):
-        """Function to run in a separate gevent greenlet to read progress
-        events from a unix-domain socket."""
-        connection, client_address = sock.accept()
-        data = b''
+    while True:
         try:
-            while True:
-                more_data = connection.recv(16)
-                if not more_data:
-                    break
-                data += more_data
-                lines = data.split(b'\n')
-                for line in lines[:-1]:
-                    line = line.decode()
-                    parts = line.split('=')
-                    key = parts[0] if len(parts) > 0 else None
-                    value = parts[1] if len(parts) > 1 else None
-                    handler(key, value)
-                data = lines[-1]
-        finally:
-            connection.close()
+            driver.get(video[4])
+        except WebDriverException:
+            sleep(10)
+            continue
 
+        # Wait and open contentFrame
+        try:
+            WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, 'contentframe')))
+        except:
+            # The only known case of failure is when a video has been removed
+            print("Failed to find frame")
+            continue
+        driver.switch_to.frame(driver.find_element_by_id('contentframe'))
 
-if __name__ == "__main__":
-    pass
+        # Make sure that the player is loaded
+        driver.execute_script(open("create_player.js").read())
+        # Process player
+        try:
+            WebDriverWait(driver, 10).until(ec.presence_of_element_located((By.ID, 'kplayer_ifp')))
+        except:
+            # Despite the create_player script the player still wasn't found
+            print("Failed to load player")
+            continue
+
+        driver.switch_to.frame(driver.find_element_by_id('kplayer_ifp'))
+
+        # Artificial wait for the contents of kplayer_ifp
+        sleep(1)
+
+        try:  # Try and find the class where the video is
+            video_tag = driver.find_element_by_tag_name('video')
+        except NoSuchElementException:
+            print("Failed to find video class")
+            continue
+
+        video_url = video_tag.get_attribute('src')
+        if not video_url:
+            print("Failed to find video source")
+            break
+
+        try:  # Tries to find the child class where subs are
+            srt_url = video_tag.find_element_by_xpath("./child::*").get_attribute('src')
+            print("srt found")
+        except NoSuchElementException:
+            srt_url = None
+
+        if save(video_url, srt_url, video[4]):
+            continue
+        break
