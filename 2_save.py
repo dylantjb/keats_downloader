@@ -14,7 +14,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 database = sqlite3.connect('main.db')
 MAX_NAME_LENGTH = 40
-base_folder = "/home/dylan/OneDrive/Lectures"  # change if necessary
+base_folder = "Library"  # change if necessary
 
 options = webdriver.ChromeOptions()
 options.add_argument("--user-data-dir=selenium/chrome_driver")
