@@ -45,10 +45,8 @@ def save(video_url, srt_url, page_url):
 
         try:
             Progress(video_url, path, srt_url).run()
-            sleep(5)
             database.execute("UPDATE Videos SET file_exists = TRUE WHERE pageUrl = ?", [page_url])
             database.commit()
-            print("YOOO")
         except:  # Connection lost
             sleep(10)
             os.remove(path) if os.path.exists(path) else None
