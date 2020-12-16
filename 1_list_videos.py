@@ -31,7 +31,7 @@ for course in courses:
 
     index = 1
     for i in range(len(videoDicts) - 1):
-        videoDicts[i]['name'] = str(index) + "_" + videoDicts[i]['name']
+        videoDicts[i]['name'] = "{:02}_{}".format(index, video[i]['name'])
 
         index = index + 1 if videoDicts[i]['week'] == videoDicts[i+1]['week'] else 1
         if i == len(videoDicts)-2:
