@@ -34,6 +34,8 @@ for course in courses:
         videoDicts[i]['name'] = str(index) + "_" + videoDicts[i]['name']
 
         index = index + 1 if videoDicts[i]['week'] == videoDicts[i+1]['week'] else 1
+        if i == len(videoDicts)-2:
+            videoDicts[i+1]['name'] = str(index) + "_" + videoDicts[i+1]['name]
 
         videos.append((videoDicts[i]['course'], videoDicts[i]['courseID'], videoDicts[i]['week'], videoDicts[i]['name'],
                        videoDicts[i]['pageUrl']))
