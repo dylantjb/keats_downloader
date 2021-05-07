@@ -27,7 +27,7 @@ for course in courses:
     driver.get(course)
     print(course)
     WebDriverWait(driver, 10).until(wait_element)
-    video_dicts = driver.execute_script(open("list_videos.js").read())
+    video_dicts = driver.execute_script(open("utils/list_videos.js").read())
     videos = []
 
     video_index = 1

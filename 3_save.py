@@ -4,7 +4,7 @@ from pathlib import Path
 import ffmpeg
 from time import sleep
 
-from show_progress import Progress
+from utils.show_progress import Progress
 
 from selenium import webdriver
 from chromedriver_py import binary_path
@@ -68,7 +68,7 @@ for video in database.execute("SELECT * FROM Videos WHERE file_exists = FALSE"):
         driver.switch_to.frame(driver.find_element_by_id("contentframe"))
 
         # Make sure that the player is loaded
-        driver.execute_script(open("create_player.js").read())
+        driver.execute_script(open("utils/create_player.js").read())
         # Process player
         try:
             WebDriverWait(driver, 10).until(
