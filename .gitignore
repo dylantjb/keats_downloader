@@ -1,8 +1,5 @@
-*.mp4
-selenium
-venv/
-run
+.venv
+.userdata
 main.db
 courses.txt
-debug.log
 __pycache__/

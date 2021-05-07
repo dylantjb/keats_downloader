@@ -2,7 +2,7 @@ import os
 import sqlite3
 
 MAX_NAME_LENGTH = 40
-base_folder = "Library"  # change if necessary
+base_folder = os.environ["HOME"] + "/Videos/Lectures" # change if necessary 
 
 database = sqlite3.connect('main.db')
 

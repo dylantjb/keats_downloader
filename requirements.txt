@@ -1,5 +1,6 @@
 selenium
 ffmpeg-python
+chromedriver-py
 requests
 gevent
 tqdm

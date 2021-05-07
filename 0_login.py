@@ -1,8 +1,10 @@
+from os import getcwd
 from selenium import webdriver
+from chromedriver_py import binary_path
 
 options = webdriver.ChromeOptions()
-options.add_argument("--user-data-dir=selenium/chrome_driver")
-driver = webdriver.Chrome(executable_path="selenium/chromedriver", options=options)  # for Windows add .exe
+options.add_argument("--user-data-dir=" + getcwd() + "/.userdata")
+driver = webdriver.Chrome(executable_path=binary_path, options=options)  # for Windows add .exe
 
 driver.get("https://keats.kcl.ac.uk/")
 
