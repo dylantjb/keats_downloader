@@ -35,4 +35,4 @@ https://keats.kcl.ac.uk/course/view.php?id=BBBBB
 https://keats.kcl.ac.uk/course/view.php?id=CCCCC
 https://keats.kcl.ac.uk/course/view.php?id=DDDDD
 ```
-2. Execute the python files in their numbered order and optionally create a script ([examples](https://github.com/dylantjb/keats_downloader/examples)). The 0-numbered files should only be executed once, others will have to be repeated if you want to download new videos. `0_login.py` gives you an opportunity to login to your Keats account because the browser uses a separate profile.
+2. Execute the python files in their numbered order and optionally create a script ([examples](https://github.com/dylantjb/keats_downloader/tree/master/examples)). The 0-numbered files should only be executed once, others will have to be repeated if you want to download new videos. `0_login.py` gives you an opportunity to login to your Keats account because the browser uses a separate profile.
